@@ -44,10 +44,12 @@ def prepare_device(n_gpu_use):
     return device, list_ids
 
 class MetricTracker:
-    def __init__(self, *keys, writer=None):
+    def __init__(self, *keys, writer=None, section='train', use_wandb=False):
         self.writer = writer
         self._data = pd.DataFrame(index=keys, columns=['total', 'counts', 'average'])
         self.reset()
+        self.use_wandb = use_wandb
+        self.section = section
 
     def reset(self):
         for col in self._data.columns:
@@ -56,6 +58,8 @@ class MetricTracker:
     def update(self, key, value, n=1):
         if self.writer is not None:
             self.writer.add_scalar(key, value)
+        if self.use_wandb:
+            wandb.log({self.section + '_' + key: value})
         self._data.total[key] += value * n
         self._data.counts[key] += n
         self._data.average[key] = self._data.total[key] / self._data.counts[key]

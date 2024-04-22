@@ -27,8 +27,13 @@ class Trainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
 
-        self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
-        self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+        self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer, section='train', use_wandb=config['use_wandb'])
+        self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer, section='val', use_wandb=False)
+        if config['use_wandb']:
+            wandb.init(
+                project=config['name'],
+                config=config
+            )
 
     def _train_epoch(self, epoch):
         """
@@ -67,6 +72,8 @@ class Trainer(BaseTrainer):
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
             log.update(**{'val_'+k : v for k, v in val_log.items()})
+            wandb.log(log)
+
 
         if self.lr_scheduler is not None:
             self.lr_scheduler.step()
