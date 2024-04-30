@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch.nn.functional as F
 from base import BaseModel
-
+import torchvision
 
 class MnistModel(BaseModel):
     def __init__(self, num_classes=10):
@@ -20,3 +20,15 @@ class MnistModel(BaseModel):
         x = F.dropout(x, training=self.training)
         x = self.fc2(x)
         return F.log_softmax(x, dim=1)
+
+class TongueGestureModel(BaseModel):
+    def __init__(self, num_classes=2):
+        super().__init__()
+        self.resnet = torchvision.models.resnet18(pretrained=True)
+        self.fc1 = nn.Linear(1000, 256)
+        self.fc2 = nn.Linear(256, num_classes)
+    def forward(self, x):
+        x = self.resnet(x)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x 
